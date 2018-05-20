@@ -54,7 +54,8 @@ module.exports = function(args, opt) {
 
     // check free space on disk
     let diskCheck = setInterval(async () => {
-      let freespace = await checkDiskSpace(vidDir).free / 1000000.0;
+      let freespace = await checkDiskSpace(vidDir);
+      freespace = freespace.free / 1000000.0;
       log(freespace);
       if (freespace <= 1000) {
         upscalerProcess.kill('SIGINT');
