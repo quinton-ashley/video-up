@@ -55,8 +55,8 @@ module.exports = function(args, opt) {
     // check free space on disk
     let diskCheck = setInterval(async () => {
       let freespace = await checkDiskSpace(vidDir);
-      freespace = freespace.free / 1000000.0;
-      log(freespace);
+      freespace = (new Number(freespace.free)) / 1000000.0;
+      log(Math.round(freespace) + 'MB');
       if (freespace <= 1000) {
         upscalerProcess.kill('SIGINT');
         multiPart = true;
@@ -64,12 +64,11 @@ module.exports = function(args, opt) {
       }
     }, 60000);
 
-    // await delay(100000);
-
     // upscale frames with waifu2x: 16 bit color, cudnn processor used,
     // noise level 3
     log('waifu2x upscale in progress');
-    upscalerProcess = await spawn('C:/Program Files (x86)/waifu2x-caffe/waifu2x-caffe-cui.exe', [
+    let waifu2x = 'C:/Program Files (x86)/waifu2x-caffe/waifu2x-caffe-cui.exe';
+    upscalerProcess = await spawn(waifu2x, [
       '-i', vidDir + '/z',
       '-d', (opt.d || 16),
       '-p', (opt.p || 'cudnn'),
@@ -92,56 +91,70 @@ module.exports = function(args, opt) {
       '-rc:v', 'constqp',
       '-qp', 12,
       '-rc-lookahead', 32,
-      '-pix_fmt', 'yuv444p16le',
+      '-pix_fmt', 'yuv444p10le',
       preVidPath
     ], {
       stdio: 'inherit'
     });
 
-    let finalVidPath = outputDir + '/' + path.parse(vid).name + '.mp4';
+    let finalVidPath = `${outputDir}/${path.parse(vid).name}.mp4`;
 
     if (multiPart) {
-      // partNum++;
-      // let startNumber = 1;
-      // await upscale(vid, startNumber);
-      // let parts = [];
-      // for (let i = 0; i < partNum; i++) {
-      //   parts.push('-i');
-      //   parts.push(`${outputDir}/${path.parse(vid).name}_${i}.mp4`);
-      // }
-      //
-      // await spawn('ffmpeg', parts.concat([
-      //   '-c', 'copy',
-      //   '-map', '0:v:0',
-      //   '-map', '1:a:0',
-      //   '-shortest',
-      //   finalVidPath
-      // ]), {
-      //   stdio: 'inherit'
-      // });
+      let upDir = vidDir + '/up';
+      let files = klawSync(upDir);
+      let last = 1;
+      let cur;
+      for (let i = 0; i < files.length; i++) {
+        cur = Math.round(new Number(path.parse(files[i].path).name.slice(1)));
+        if (cur > last) {
+          last = cur;
+        }
+      }
+      fs.removeSync(upDir);
+      partNum++;
+      multiPart = false;
+      return await upscale(vid, last);
+    }
 
-    } else {
-      // add orginal audio to upscaled video
+    if (partNum > 0) {
+      let partsFile = '';
+      for (let i = 0; i <= partNum; i++) {
+        partsFile += `file '${outputDir}/${path.parse(vid).name}_${i}.mp4'\n`;
+      }
+      let partsFilePath = `${outputDir}/${path.parse(vid).name}_parts.txt`
+      fs.outputFileSync(partsFilePath, partsFile);
+      preVidPath = `${outputDir}/${path.parse(vid).name}_combo.mp4`;
+
       await spawn('ffmpeg', [
-        '-i', preVidPath,
-        '-i', vid,
+        '-f', 'concat',
+        '-i', 'input.txt',
         '-c', 'copy',
-        '-map', '0:v:0',
-        '-map', '1:a:0',
-        '-shortest',
-        finalVidPath
+        preVidPath
       ], {
         stdio: 'inherit'
       });
-
-      // remove vid with no sound
-      fs.removeSync(preVidPath);
     }
+
+    // add orginal audio to upscaled video
+    await spawn('ffmpeg', [
+      '-i', preVidPath,
+      '-i', vid,
+      '-c', 'copy',
+      '-map', '0:v:0',
+      '-map', '1:a:0',
+      '-shortest',
+      finalVidPath
+    ], {
+      stdio: 'inherit'
+    });
+
+    fs.removeSync(preVidPath);
 
     // remove temp directory
     fs.removeSync(vidDir);
     clearInterval(diskCheck);
     log('finished!');
+    return true;
   }
 
   async function upscale(vid, startNumber) {
