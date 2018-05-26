@@ -24,6 +24,7 @@ module.exports = function(args, opt) {
     let vidDir = (opt.t || opt.o || 'E:/atla') + '/' + path.parse(vid).name;
     log(vidDir);
     fs.ensureDirSync(outputDir);
+
     if (!startNumber) {
       fs.ensureDirSync(vidDir + '/y');
       fs.ensureDirSync(vidDir + '/z');
@@ -54,8 +55,8 @@ module.exports = function(args, opt) {
 
     // check free space on disk
     let diskCheck = setInterval(async () => {
-      let freespace = await checkDiskSpace(vidDir);
-      freespace = (new Number(freespace.free)) / 1000000.0;
+      let freespace = (await checkDiskSpace(vidDir)).free;
+      freespace /= 1000000.0;
       log(Math.round(freespace) + 'MB');
       if (freespace <= 1000) {
         upscalerProcess.kill('SIGINT');
