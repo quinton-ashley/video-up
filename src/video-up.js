@@ -2,14 +2,20 @@ module.exports = function(args, opt) {
   const checkDiskSpace = require('check-disk-space');
   const delay = require('delay');
   const fs = require('fs-extra');
-  const klawSync = require('klaw-sync'); // get all files in a directory
+  const klaw = require('klaw-promise'); // get all files in a directory
   const path = require('path');
   const process = require('process'); // built-in node.js process library
-  const spawn = require('await-spawn'); // use await with a child process
+  const spawnAwait = require('await-spawn'); // use await with a child process
+  const {
+    spawn
+  } = require('child_process');
+  const {
+    join
+  } = require('async-child-process');
 
   const __homeDir = require('os').homedir();
   const __parentDir = path.dirname(process.mainModule.filename);
-  const err = console.error;
+  const er = console.error;
   const log = console.log;
 
   let input = opt.i;
@@ -17,20 +23,22 @@ module.exports = function(args, opt) {
     throw `file input doesn't exit`;
   }
   let outputDir = (opt.o || 'D:/Videos/Avatar_The_Last_Airbender/Book_3');
-  let vidNum = (-opt.s || 0);
+  let vidNum = (-opt.skip || 0);
   let upscalerProcess, multiPart, partNum;
 
   async function _upscale(vid, startNumber) {
-    let vidDir = (opt.t || opt.o || 'E:/atla') + '/' + path.parse(vid).name;
-    log(vidDir);
+    let vidName = path.parse(vid).name;
+    let vidDir = (opt.o || 'E:/atla') + '/' + vidName;
+    log('vidDir: ' + vidDir);
     fs.ensureDirSync(outputDir);
+    log('startNumber: ' + startNumber);
 
     if (!startNumber) {
       fs.ensureDirSync(vidDir + '/y');
       fs.ensureDirSync(vidDir + '/z');
 
       // get frames, scale to 960:540
-      await spawn('ffmpeg', [
+      await spawnAwait('ffmpeg', [
         '-i', vid,
         '-q:v', 2,
         '-vf', 'scale=960:540',
@@ -40,7 +48,7 @@ module.exports = function(args, opt) {
       });
 
       // get frames, crop to 720:540
-      await spawn('ffmpeg', [
+      await spawnAwait('ffmpeg', [
         '-i', vidDir + '/y/y%06d.jpg',
         '-q:v', 2,
         '-vf', 'crop=720:540:120:0',
@@ -55,35 +63,43 @@ module.exports = function(args, opt) {
 
     // check free space on disk
     let diskCheck = setInterval(async () => {
-      let freespace = (await checkDiskSpace(vidDir)).free;
-      freespace /= 1000000.0;
-      log(Math.round(freespace) + 'MB');
-      if (freespace <= 1000) {
-        upscalerProcess.kill('SIGINT');
+      let freeSpace = (await checkDiskSpace(vidDir)).free;
+      freeSpace /= 1000000.0;
+      log(Math.round(freeSpace) + 'MB of free space');
+      if (freeSpace <= (opt.f || opt.free || 2000)) {
+        log('killing waifu2x child process');
+        upscalerProcess.kill();
         multiPart = true;
         clearInterval(diskCheck);
       }
-    }, 60000);
+    }, (opt.t || opt.time || 60000));
 
-    // upscale frames with waifu2x: 16 bit color, cudnn processor used,
-    // noise level 3
+    // upscale frames with waifu2x, defaults can be changed via command line
+    // options
     log('waifu2x upscale in progress');
     let waifu2x = 'C:/Program Files (x86)/waifu2x-caffe/waifu2x-caffe-cui.exe';
-    upscalerProcess = await spawn(waifu2x, [
+    upscalerProcess = spawn(waifu2x, [
       '-i', vidDir + '/z',
-      '-d', (opt.d || 16),
-      '-p', (opt.p || 'cudnn'),
-      '-n', (opt.n || 3),
+      '-d', (opt.d || opt.depth || 16), // 16 bit color depth
+      '-p', (opt.p || opt.processor || 'cudnn'), // cudnn processor used
+      '-n', (opt.n || opt.noise || 3), // noise level 3
       '-o', vidDir + '/up'
     ], {
       stdio: 'inherit'
     });
 
-    let preVidPath = `${outputDir}/${path.parse(vid).name}_${partNum}.mp4`;
+    // will put out an error when closed prematurely, this must be ignored
+    // for multipart upscaling
+    try {
+      await join(upscalerProcess);
+    } catch (ror) {}
+    clearInterval(diskCheck);
 
-    // use GPU to convert frames into h.265 encoded video with 16 bit color
-    // qp of 12 is practically lossless
-    await spawn('ffmpeg', [
+    let preVidPath = `${outputDir}/${vidName}_${partNum}.mp4`;
+
+    // uses nvidia GPU to convert frames into h.265 encoded video with 16 bit
+    // color, a qp of 12 is practically lossless
+    await spawnAwait('ffmpeg', [
       '-hwaccel', 'cuvid',
       '-r', (opt.r || '24000/1001'),
       '-start_number', (startNumber || 0),
@@ -92,52 +108,72 @@ module.exports = function(args, opt) {
       '-rc:v', 'constqp',
       '-qp', 12,
       '-rc-lookahead', 32,
-      '-pix_fmt', 'yuv444p10le',
+      '-pix_fmt', 'yuv444p16le',
       preVidPath
     ], {
       stdio: 'inherit'
     });
 
-    let finalVidPath = `${outputDir}/${path.parse(vid).name}.mp4`;
+    let finalVidPath = `${outputDir}/${vidName}.mp4`;
 
     if (multiPart) {
       let upDir = vidDir + '/up';
-      let files = klawSync(upDir);
+      let files;
+      let first = 1000000;
       let last = 1;
       let cur;
-      for (let i = 0; i < files.length; i++) {
-        cur = Math.round(new Number(path.parse(files[i].path).name.slice(1)));
-        if (cur > last) {
-          last = cur;
+      try {
+        files = await klaw(upDir);
+        for (let i = 0; i < files.length; i++) {
+          cur = path.parse(files[i].path).name;
+          fs.removeSync(`${vidDir}/z/${cur}.jpg`);
+          fs.removeSync(`${upDir}/${cur}.png`);
+          cur = new Number(cur.slice(1));
+          if (cur > last) {
+            last = cur;
+          }
+          if (cur < first) {
+            first = cur;
+          }
         }
+        log(`deleted frames ${first}-${last}`);
+        files = 0;
+      } catch (ror) {}
+      if (last != 1) {
+        partNum++;
+        multiPart = false;
+        return await upscale(vid, last);
       }
-      fs.removeSync(upDir);
-      partNum++;
-      multiPart = false;
-      return await upscale(vid, last);
     }
 
     if (partNum > 0) {
       let partsFile = '';
       for (let i = 0; i <= partNum; i++) {
-        partsFile += `file '${outputDir}/${path.parse(vid).name}_${i}.mp4'\n`;
+        partsFile += `file '${vidName}_${i}.mp4'\n`;
       }
-      let partsFilePath = `${outputDir}/${path.parse(vid).name}_parts.txt`
+      let partsFilePath = `${outputDir}/${vidName}_parts.txt`
       fs.outputFileSync(partsFilePath, partsFile);
-      preVidPath = `${outputDir}/${path.parse(vid).name}_combo.mp4`;
+      preVidPath = `${outputDir}/${vidName}_combo.mp4`;
 
-      await spawn('ffmpeg', [
+      log('combining multiple parts of ' + vidName);
+      await spawnAwait('ffmpeg', [
         '-f', 'concat',
-        '-i', 'input.txt',
+        '-safe', 0,
+        '-i', partsFilePath,
         '-c', 'copy',
         preVidPath
       ], {
         stdio: 'inherit'
       });
+
+      for (let i = 0; i <= partNum; i++) {
+        fs.removeSync(`${outputDir}/${vidName}_${i}.mp4`);
+      }
+      fs.removeSync(partsFilePath);
     }
 
     // add orginal audio to upscaled video
-    await spawn('ffmpeg', [
+    await spawnAwait('ffmpeg', [
       '-i', preVidPath,
       '-i', vid,
       '-c', 'copy',
@@ -153,7 +189,6 @@ module.exports = function(args, opt) {
 
     // remove temp directory
     fs.removeSync(vidDir);
-    clearInterval(diskCheck);
     log('finished!');
     return true;
   }
@@ -161,8 +196,8 @@ module.exports = function(args, opt) {
   async function upscale(vid, startNumber) {
     try {
       await _upscale(vid, startNumber);
-    } catch (er) {
-      err(er);
+    } catch (ror) {
+      er(ror);
       process.exit(1);
     }
   }
@@ -175,13 +210,15 @@ module.exports = function(args, opt) {
           if (vidNum >= 0) {
             multiPart = false;
             partNum = 0;
-            await upscale(input + '/' + files[i]);
+            await upscale(input + '/' + files[i], 0);
           }
           vidNum++;
         }
       }
     } else {
-      await upscale(input);
+      multiPart = false;
+      partNum = (opt.m || opt.multipart || ((opt.start) ? 1 : 0));
+      await upscale(input, (opt.start || 0));
     }
   }
 
