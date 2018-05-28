@@ -68,6 +68,7 @@ module.exports = function(args, opt) {
       log(Math.round(freeSpace) + 'MB of free space');
       if (freeSpace <= (opt.f || opt.free || 2000)) {
         log('killing waifu2x child process');
+        log('creating video part number ' + partNum);
         upscalerProcess.kill();
         multiPart = true;
         clearInterval(diskCheck);
