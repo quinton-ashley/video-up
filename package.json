@@ -17,7 +17,7 @@
     "minimist": "^1.2.0"
   },
   "entry point": "app.js",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "main": "app.js",
   "maintainers": [
     {
@@ -28,14 +28,14 @@
   "private": false,
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/quinton-ashley/video-up.git"
   },
   "scripts": {
     "prestart": "npm up --save",
     "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "version": "git add -A",
-    "postversion": "git push && git push --tags && npm publish"
+    "postversion": "git push && git push --tags"
   },
-  "version": "1.0.0"
+  "version": "1.0.1"
 }

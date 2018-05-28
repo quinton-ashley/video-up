@@ -18,52 +18,52 @@ module.exports = function(args, opt) {
   const er = console.error;
   const log = console.log;
 
-  let input = opt.i;
+  let input = (opt.i || opt.input);
   if (!input || !fs.existsSync(input)) {
     throw `file input doesn't exit`;
   }
-  let outputDir = (opt.o || 'D:/Videos/Avatar_The_Last_Airbender/Book_3');
+  let outputDir = (opt.o || opt.output || 'D:/Videos/Avatar_The_Last_Airbender/Book_3');
   let vidNum = (-opt.skip || 0);
   let upscalerProcess, multiPart, partNum;
 
   async function _upscale(vid, startNumber) {
     let vidName = path.parse(vid).name;
-    let vidDir = (opt.o || 'E:/atla') + '/' + vidName;
-    log('vidDir: ' + vidDir);
+    let tempDir = (opt.t || opt.temp || 'E:/atla') + '/' + vidName;
+    log('tempDir: ' + tempDir);
     fs.ensureDirSync(outputDir);
     log('startNumber: ' + startNumber);
 
     if (!startNumber) {
-      fs.ensureDirSync(vidDir + '/y');
-      fs.ensureDirSync(vidDir + '/z');
+      fs.ensureDirSync(tempDir + '/y');
+      fs.ensureDirSync(tempDir + '/z');
 
       // get frames, scale to 960:540
       await spawnAwait('ffmpeg', [
         '-i', vid,
         '-q:v', 2,
         '-vf', 'scale=960:540',
-        vidDir + '/y/y%06d.jpg', '-hide_banner'
+        tempDir + '/y/y%06d.jpg', '-hide_banner'
       ], {
         stdio: 'inherit'
       });
 
       // get frames, crop to 720:540
       await spawnAwait('ffmpeg', [
-        '-i', vidDir + '/y/y%06d.jpg',
+        '-i', tempDir + '/y/y%06d.jpg',
         '-q:v', 2,
         '-vf', 'crop=720:540:120:0',
-        vidDir + '/z/z%06d.jpg', '-hide_banner'
+        tempDir + '/z/z%06d.jpg', '-hide_banner'
       ], {
         stdio: 'inherit'
       });
 
       // delete all uncropped frames
-      fs.removeSync(vidDir + '/y');
+      fs.removeSync(tempDir + '/y');
     }
 
     // check free space on disk
     let diskCheck = setInterval(async () => {
-      let freeSpace = (await checkDiskSpace(vidDir)).free;
+      let freeSpace = (await checkDiskSpace(tempDir)).free;
       freeSpace /= 1000000.0;
       log(Math.round(freeSpace) + 'MB of free space');
       if (freeSpace <= (opt.f || opt.free || 2000)) {
@@ -73,18 +73,18 @@ module.exports = function(args, opt) {
         multiPart = true;
         clearInterval(diskCheck);
       }
-    }, (opt.t || opt.time || 60000));
+    }, (opt.interval || 60000));
 
     // upscale frames with waifu2x, defaults can be changed via command line
     // options
     log('waifu2x upscale in progress');
     let waifu2x = 'C:/Program Files (x86)/waifu2x-caffe/waifu2x-caffe-cui.exe';
     upscalerProcess = spawn(waifu2x, [
-      '-i', vidDir + '/z',
+      '-i', tempDir + '/z',
       '-d', (opt.d || opt.depth || 16), // 16 bit color depth
       '-p', (opt.p || opt.processor || 'cudnn'), // cudnn processor used
       '-n', (opt.n || opt.noise || 3), // noise level 3
-      '-o', vidDir + '/up'
+      '-o', tempDir + '/up'
     ], {
       stdio: 'inherit'
     });
@@ -104,7 +104,7 @@ module.exports = function(args, opt) {
       '-hwaccel', 'cuvid',
       '-r', (opt.r || '24000/1001'),
       '-start_number', (startNumber || 0),
-      '-i', vidDir + '/up/z%06d.png',
+      '-i', tempDir + '/up/z%06d.png',
       '-c:v', 'hevc_nvenc',
       '-rc:v', 'constqp',
       '-qp', 12,
@@ -118,7 +118,7 @@ module.exports = function(args, opt) {
     let finalVidPath = `${outputDir}/${vidName}.mp4`;
 
     if (multiPart) {
-      let upDir = vidDir + '/up';
+      let upDir = tempDir + '/up';
       let files;
       let first = 1000000;
       let last = 1;
@@ -127,7 +127,7 @@ module.exports = function(args, opt) {
         files = await klaw(upDir);
         for (let i = 0; i < files.length; i++) {
           cur = path.parse(files[i].path).name;
-          fs.removeSync(`${vidDir}/z/${cur}.jpg`);
+          fs.removeSync(`${tempDir}/z/${cur}.jpg`);
           fs.removeSync(`${upDir}/${cur}.png`);
           cur = new Number(cur.slice(1));
           if (cur > last) {
@@ -189,7 +189,7 @@ module.exports = function(args, opt) {
     fs.removeSync(preVidPath);
 
     // remove temp directory
-    fs.removeSync(vidDir);
+    fs.removeSync(tempDir);
     log('finished!');
     return true;
   }
