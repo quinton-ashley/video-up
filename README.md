@@ -40,15 +40,34 @@ an HDR projector or display.
 -   256GB+ of scratch disk space for the tempDir on a fast SSD or m.2 drive
 -   300GB+ free on a hard drive for all the ATLA Blu-ray discs and the outputDir
 
-### CLI Examples
+### CLI Installation
+
+```javascript
+npm i video-up -g
+```
+
+### CLI Usage
 
 Whole disk:
 
-`$ node app.js -i /d/Videos/ATLA/Disc3-1/BDMV/STREAM -t /e/atla/temp -o /d/Videos/ATLA/Book_3`
+```javascript
+video-up -i /d/Videos/ATLA/Disc3-1/BDMV/STREAM -t /e/atla/temp -o /d/Videos/ATLA/Book_3
+```
 
 Single episode:
 
-`$ node app.js -i /d/Videos/ATLA/Disc3-1/BDMV/STREAM/01062.m2ts -t /e/atla/temp -o /d/Videos/ATLA/Book_3`
+```javascript
+video-up -i /d/Videos/ATLA/Disc3-1/BDMV/STREAM/01062.m2ts -t /e/atla/temp -o /d/Videos/ATLA/Book_3
+```
+
+### node.js Usage
+
+```javascript
+require('video-up')({
+  'i': '/d/Videos/ATLA/Disc3-1/BDMV/STREAM/01062.m2ts',
+  't': '/e/atla/temp -o /d/Videos/ATLA/Book_3'
+});
+```
 
 ### Donate
 
