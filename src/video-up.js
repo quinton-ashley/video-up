@@ -204,6 +204,7 @@ module.exports = function(args, opt) {
   }
 
   async function findVids() {
+    log('input: ' + input);
     if (fs.statSync(input).isDirectory()) {
       let files = fs.readdirSync(input);
       for (let i = 0; i < files.length; i++) {

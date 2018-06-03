@@ -1,6 +1,6 @@
 {
   "author": "Quinton Ashley",
-  "name": "video-up",
+  "bin": "bin/video-up",
   "contributors": [
     {
       "name": "Quinton Ashley",
@@ -9,33 +9,36 @@
   ],
   "dependencies": {
     "async-child-process": "^1.1.1",
-    "await-spawn": "^2.0.0",
+    "await-spawn": "^2.1.1",
     "check-disk-space": "^1.5.0",
     "delay": "^2.0.0",
     "fs-extra": "^4.0.3",
     "klaw-promise": "^1.2.0",
     "minimist": "^1.2.0"
   },
-  "entry point": "app.js",
+  "entry point": "index.js",
+  "keywords": [
+    "cli"
+  ],
   "license": "MIT",
-  "main": "app.js",
+  "main": "index.js",
   "maintainers": [
     {
       "name": "Quinton Ashley",
       "email": "qashto@gmail.com"
     }
   ],
+  "name": "video-up",
   "private": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/quinton-ashley/video-up.git"
+    "url": "git+https://github.com/quinton-ashley/video-up.git"
   },
   "scripts": {
-    "prestart": "npm up --save",
-    "start": "node app.js",
+    "start": "node bin/video-up",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "version": "git add -A",
-    "postversion": "git push && git push --tags"
+    "version": "git add .",
+    "postversion": "git push && git push --tags && npm publish"
   },
-  "version": "1.0.1"
+  "version": "1.0.2"
 }
