@@ -48,7 +48,7 @@ npm i video-up -g
 
 ### CLI Usage
 
-Whole disk:
+Whole blu-ray disk:
 
 ```javascript
 video-up -i /d/Videos/ATLA/Disc3-1/BDMV/STREAM -t /e/atla/temp -o /d/Videos/ATLA/Book_3
@@ -64,14 +64,17 @@ video-up -i /d/Videos/ATLA/Disc3-1/BDMV/STREAM/01062.m2ts -t /e/atla/temp -o /d/
 
 ```javascript
 require('video-up')({
-  'i': '/d/Videos/ATLA/Disc3-1/BDMV/STREAM/01062.m2ts',
-  't': '/e/atla/temp -o /d/Videos/ATLA/Book_3'
+  i: '/d/Videos/ATLA/Disc3-1/BDMV/STREAM/01062.m2ts',
+  t: '/e/atla/temp',
+  o: '/d/Videos/ATLA/Book_3'
 });
 ```
 
-### Donate
+### Please consider donating!
+
+If you want to support this project and you appreciate my work so far please donate!  Any amount is accepted.  Thank you :)
 
 Ethereum: 0xb4355179da353f1BA4AA0BB5a7E3Ba4FdC7128ea  
-Bitcoin: 1562cPDAqTCtF1oX6RPMy1n8Rx6jvzYTvN  
-<https://www.patreon.com/qashto>  
-<https://www.paypal.me/qashto/5>
+Bitcoin: 1LJkyU5jdZb525sBwcx1dA2qV8kgowdcro  
+Patreon: <https://www.patreon.com/qashto>  
+Paypal: <https://www.paypal.me/qashto/5>

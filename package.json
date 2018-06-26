@@ -1,6 +1,6 @@
 {
   "author": "Quinton Ashley",
-  "bin": "bin/video-up",
+  "bin": "bin/video-up.js",
   "contributors": [
     {
       "name": "Quinton Ashley",
@@ -11,8 +11,8 @@
     "async-child-process": "^1.1.1",
     "await-spawn": "^2.1.1",
     "check-disk-space": "^1.5.0",
-    "delay": "^2.0.0",
-    "fs-extra": "^4.0.3",
+    "delay": "^3.0.0",
+    "fs-extra": "^6.0.1",
     "klaw-promise": "^1.2.0",
     "minimist": "^1.2.0"
   },
@@ -35,10 +35,11 @@
     "url": "git+https://github.com/quinton-ashley/video-up.git"
   },
   "scripts": {
-    "start": "node bin/video-up",
+    "start": "node bin/video-up.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "iup": "npm i --save $(npm outdated | cut -d ' ' -f -1 | sed '1d' | sed 's/$/@*/')",
     "version": "git add -A",
     "postversion": "git push && git push --tags && npm publish"
   },
-  "version": "1.0.4"
+  "version": "1.0.5"
 }
