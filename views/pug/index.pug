@@ -1,0 +1,44 @@
+doctype html
+html
+  head
+    title= title
+    link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap/dist/css/bootstrap.min.css')
+    link(rel='stylesheet' type='text/css' href=node_modules + '/contro-ui/dist/css/contro-ui.css')
+    link(rel='stylesheet' type='text/css' href='../css/style.css')
+
+body
+  nav.navbar.p-0.titlebar
+    .cover.power.p-2.m-0: ul.nav.justify-content-left.m-0
+      h2.col.m-0.p-0 video-up by Quinton Ashley
+      //- img.logoNav(src='../img/logo.png')
+    .cover.view.p-2.m-0: ul.nav.justify-content-right.m-0
+      li.nav-item
+        button#close X
+  .container.col-12.col-sm-12.col-md-12.col-lg-12.col-xl-10.justify-content-center.mb-2: .row.px-2
+    #in.col-12: .row
+      .col-10.my-2.pr-2.pl-0
+        input#input(type='text' placeholder='/input/file/files/or/folder')
+      .col-2.my-2: .row.justify-content-center
+        button.uie.btn.enabled.col(name='in') Select
+    #inOpt.col-12: .row
+      .col-4.my-2.mx-0.br-1: .row.justify-content-center.mr-0
+        button.uie.btn.enabled.col(name='inFile') Select File
+      .col-4.my-2.mx-0.br-1: .row.justify-content-center.mx-0
+        button.uie.btn.enabled.col(name='inFiles') Select Files
+      .col-4.my-2.mx-0: .row.justify-content-center.ml-0
+        button.uie.btn.enabled.col(name='inDir') Select Folder
+    #tmp.col-12: .row
+      .col-10.my-2.pr-2.pl-0
+        input#temp(type='text' placeholder='/temp/folder')
+      .col-2.my-2: .row.justify-content-center
+        button.uie.btn.enabled.col(name='tmp') Select
+    #out.col-12: .row
+      .col-10.my-2.pr-2.pl-0
+        input#output(type='text' placeholder='/output/folder')
+      .col-2.my-2: .row.justify-content-center
+        button.uie.btn.enabled.col(name='out') Select
+    button#start.uie.btn.enabled.col.p-2(name='start') Start
+  script.
+    console.log('opening index.pug');
+    console.log('#{node_modules}');
+    require('../js/index.js')({__rootDir:'#{__rootDir}'});

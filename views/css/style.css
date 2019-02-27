@@ -1,0 +1,95 @@
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+	::-webkit-scrollbar {
+		display: none !important;
+	}
+}
+
+.titlebar {
+	-webkit-user-select: none;
+	-webkit-app-region: drag;
+}
+
+.selected {
+	background-color: brown;
+	color: #FFF;
+}
+
+.hiddenRow {
+	padding: 0 !important;
+}
+
+body {
+	color: #0cc;
+	background-color: #000;
+	font-size: 20px;
+}
+
+#inOpt,
+#out,
+#start,
+#tmp {
+	display: none;
+}
+
+form,
+input,
+nav,
+textarea {
+	background-color: #000!important;
+	color: #eee;
+}
+
+div.progress-bar {
+	color: #888c90;
+	background-color: #818c46;
+}
+
+.btn {
+	background-color: #044;
+}
+
+.btn.enabled {
+	background-color: #0cc;
+}
+
+.text-align-center {
+	text-align: center;
+}
+
+a,
+a:hover {
+	color: #0cc;
+}
+
+.nav-link small {
+	display: block;
+	font-size: 10px;
+}
+
+.uie {
+	width: 100%;
+	height: 100%;
+	display: inline;
+	vertical-align: middle;
+	border-width: 1px;
+	border-style: solid;
+	border-color: transparent;
+	font-size: 20px;
+	font-weight: bold;
+}
+
+.uie:hover {
+	filter: brightness(1.2);
+	border-top-color: #818c46;
+	border-bottom-color: #818c46;
+}
+
+input,
+textarea {
+	width: 100%;
+	height: 100%;
+}
+
+br-1 {
+	border-right: #000 solid 1px;
+}

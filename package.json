@@ -1,6 +1,6 @@
 {
   "author": "Quinton Ashley",
-  "bin": "bin/video-up.js",
+  "bin": "cli.js",
   "contributors": [
     {
       "name": "Quinton Ashley",
@@ -9,19 +9,32 @@
   ],
   "dependencies": {
     "async-child-process": "^1.1.1",
-    "await-spawn": "^2.1.1",
+    "await-spawn": "^2.1.2",
+    "bootstrap": "^4.2.1",
     "check-disk-space": "^1.5.0",
-    "delay": "^3.0.0",
-    "fs-extra": "^6.0.1",
-    "klaw-promise": "^1.2.0",
-    "minimist": "^1.2.0"
+    "contro": "^2.1.2",
+    "contro-ui": "^1.0.3",
+    "delay": "^4.1.0",
+    "electron-pug": "^2.0.0",
+    "fs-extra": "^7.0.1",
+    "jquery": "^3.3.1",
+    "klaw": "^3.0.0",
+    "markdown-it": "^8.4.1",
+    "material-design-icons-iconfont": "^4.0.3",
+    "minimist": "^1.2.0",
+    "moment": "^2.23.0",
+    "mousetrap": "^1.6.2",
+    "opn": "^5.4.0",
+    "popper.js": "^1.14.6",
+    "pug": "^2.0.3",
+    "tether": "^1.4.4"
   },
-  "entry point": "index.js",
+  "entry point": "app.js",
   "keywords": [
     "cli"
   ],
   "license": "MIT",
-  "main": "index.js",
+  "main": "app.js",
   "maintainers": [
     {
       "name": "Quinton Ashley",
@@ -35,11 +48,19 @@
     "url": "git+https://github.com/quinton-ashley/video-up.git"
   },
   "scripts": {
-    "start": "node bin/video-up.js",
+    "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "iup": "npm i --save $(npm outdated | cut -d ' ' -f -1 | sed '1d' | sed 's/$/@*/')",
+    "premiere": "O='{\"name\":\"'$npm_package_name'\",\"description\":\"'$npm_package_description'\",\"license_template\":\"'$npm_package_license'\"}' && echo \"${O}\" && curl -u $npm_package_author_name https://api.github.com/user/repos -d \"${O}\" && git init && git add -A && git commit -m $npm_package_version && git remote add origin 'https://github.com/'$npm_package_author_name'/'$npm_package_name'.git' && git pull origin master --allow-unrelated-histories --no-edit -q && git push --set-upstream origin master && git push && git push --tags",
+    "up-outdated": "npm install --save $(npm outdated | cut -d ' ' -f -1 | sed '1d' | sed 's/$/@*/')",
+    "rebuild": "npm rebuild --runtime=electron --target=4.0.1 --disturl=https://atom.io/download/atom-shell --abi=64",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder -m -l -w",
+    "gh-publish": "electron-builder -m -l -w -p always",
+    "postinstall": "electron-builder install-app-deps",
+    "v": "npm version patch --force",
     "version": "git add -A",
-    "postversion": "git push && git push --tags && npm publish"
+    "postversion": "git push",
+    "V": "git remote | xargs -L1 git push --all && git push --tags && npm publish"
   },
-  "version": "1.0.5"
+  "version": "1.0.6"
 }
